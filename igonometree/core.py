@@ -86,15 +86,22 @@ def infer_trees(df, n_subsample=100, isotype_order=False, nb_threads=1,
 
 
 
-def try_infer_tree(df, **kwargs):
+def try_infer_tree(df, n_subsample=100, isotype_order=False,
+               nb_threads=1, seed=42, scratch_folder='./',
+               keep_tmp_files=False):
     """ Try twice to infer the tree, just in case """
 
     log = ""
     for attempt in range(2):
         try:
-            return infer_tree(df, **kwargs)  # your original function
+            return infer_tree(data, n_subsample=n_subsample,
+                              isotype_order=isotype_order,
+                              nb_threads=nb_threads,
+                              scratch_folder=scratch_folder,
+                              keep_tmp_files=keep_tmp_files)
+        
         except Exception as e:
-            log += f"\n FAILURE OF INFERENCE, attempt #{attempt} \n"
+            log += f"\n FAILURE OF INFERENCE, attempt #{attempt}, exception {e} \n"
 
     # in case it didn't work, return the og dataframe
     return log, None, df
