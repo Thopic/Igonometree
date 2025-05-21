@@ -63,7 +63,7 @@ def infer_trees(df, n_subsample=100, isotype_order=False, nb_threads=1,
 
 
         
-        log, _, tree_data = infer_tree(data, n_subsample=n_subsample,
+        log, _, tree_data = try_infer_tree(data, n_subsample=n_subsample,
                                        isotype_order=isotype_order,
                                        nb_threads=nb_threads,
                                        scratch_folder=scratch_folder,
@@ -510,6 +510,7 @@ def infer_subsampled_tree(directory, df,
     cmd = (f"{raxml} --seed {seed} --threads auto{nb_threads}"
            f" --force perf_threads" # shouldn't be necessary but I had issue with this in setup where it should not fail
            f" --model 'GTR+G'"
+           f" --log DEBUG"
            f" --outgroup germline"
            f" --tree pars{{{nb_start_trees}}},rand{{{nb_start_trees}}}" 
            f" --msa {msa_file} --prefix {directory}/tree")
