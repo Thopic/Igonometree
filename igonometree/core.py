@@ -471,7 +471,7 @@ def infer_subsampled_tree(directory, df,
         
     # run raxml
     msa_file = os.path.join(directory, "clonal_alignment_reduced.fa")
-    cmd = (f"{raxml} --seed {seed} --threads {nb_threads}"
+    cmd = (f"{raxml} --seed {seed} --threads auto{nb_threads}"
            f" --force perf_threads" # shouldn't be necessary but I had issue with this in setup where it should not fail
            f" --model 'GTR+G'"
            f" --outgroup germline"
