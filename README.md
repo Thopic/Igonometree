@@ -47,7 +47,7 @@ If you're not lucky, you may also need to install the following tools and place 
   → Place the binary as: `tools/raxml-ng`
 
 * **epa-ng** (v0.3.8):
-  Install from [github.com/pierrebarbera/epa-ng](https://github.com/pierrebarbera/epa-ng)
+  The most painful one. Install from [github.com/pierrebarbera/epa-ng](https://github.com/pierrebarbera/epa-ng)
   → Place the binary as: `tools/epa-ng`
 
 * **mafft** (v7.526):

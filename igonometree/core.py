@@ -262,6 +262,9 @@ def locate_sequences(df, out_directory):
                             stderr=subprocess.PIPE,
                             shell=True)
 
+    if result.returncode != 0:
+        raise RuntimeError(f"Alignment failed:\n{result.stdout.decode()}\n{result.stderr.decode()}")
+
     # load and correct the placement file
     jplace_file = os.path.join(out_directory, "epa_result.jplace")
     collapsed_tree_file = os.path.join(out_directory, "tree.raxml.bestTreeCollapsed.asr")
