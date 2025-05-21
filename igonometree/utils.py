@@ -92,6 +92,8 @@ def get_ambiguous_nucleotide(nuc_set):
     }
     return code_map.get(nuc_tuple, 'N')
 
+
+
 def hamming(s1, s2):
     """
     Computes Hamming distance between two strings of equal length.
@@ -114,8 +116,8 @@ def mutation_string(ref: str, alt: str) -> str:
 
     muts = []
     for i, (r, a) in enumerate(zip(ref, alt)):
-        assert r in {'A', 'T', 'G', 'C', '-'}, f"Invalid character {r} in the sequence"
-        assert a in {'A', 'T', 'G', 'C', '-'}, f"Invalid character {a} in the sequence"
+        assert r in {'A', 'T', 'G', 'C', 'N', 'R','Y','S','W','K','M','B','D','H','V', '-'}, f"Invalid character {r} in the sequence"
+        assert a in {'A', 'T', 'G', 'C', 'N', 'R','Y','S','W','K','M','B','D','H','V', '-'}, f"Invalid character {a} in the sequence"
         if r == a:
             continue
         if r != "-" and a != "-":
