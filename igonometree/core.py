@@ -1,6 +1,8 @@
 import uuid
 from importlib.resources import files
 from igonometree.utils import *
+import warnings
+
 
 # location of the tools
 tools_location  = files("igonometree").joinpath("..", "tools")
@@ -47,6 +49,11 @@ def infer_trees(df, n_subsample=100, isotype_order=False, nb_threads=20,
     
     all_tree_data = None
     for group_id, data in tqdm(df.group_by('group_id'), total=df['group_id'].n_unique()):
+        if len(data) < 5:
+            warnings.warn("Clonal lineages with less than 5 sequences are skipped & removed.", stacklevel=2)
+            continue
+
+        
         log, _, tree_data = infer_tree(data, n_subsample=n_subsample,
                                        isotype_order=isotype_order,
                                        nb_threads=nb_threads,

@@ -1,6 +1,6 @@
 # Igonometree
 
-Tree inference from AIRR-seq data.
+Python package for tree inference from AIRR-seq data.
 
 ## Overview
 
@@ -71,6 +71,7 @@ df = df.rename({'cdr1fwr3_sequence_alignment': 'sequence_alignment',
                 'cdr1fwr3_germline_alignment': 'germline_alignment', 
                 'clonal_family_hilary': 'group_id'})
 
+# n_subsample is the size of the "core" tree, but all the sequences are analyzed
 df = infer_trees(df, n_subsample=50)
 trees = extract_trees(df)
 
