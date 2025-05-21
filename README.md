@@ -4,7 +4,7 @@ Tree inference from AIRR-seq data.
 
 ## Overview
 
-Antibody sequences are relatively short, highly similar, and exist in large clonal families. Standard likelihood-based phylogenetic methods are ill-suited for this setting (slow +overfit). Igonometree uses a pragmatic approach:
+Antibody sequences are relatively short, highly similar, and can sometimes form extremely large clonal families. Standard likelihood-based phylogenetic methods are ill-suited for large families (slow + overfit). Igonometree uses a pragmatic approach:
 
 * Subsample representative sequences from each clonal lineage.
 * Infer a tree on this subset.
@@ -20,6 +20,18 @@ This allows scaling to large datasets while maintaining reasonable accuracy.
   * Its placement on the tree.
   * Nearest ancestral node.
   * Mutations.
+
+The input is a DataFrame in AIRR format with the following required columns:
+
+* `sequence_id`: unique identifier for each sequence
+* `sequence_alignment`: the sequence (not necessarily aligned)
+* `germline_alignment`: the corresponding germline sequence
+* `group_id`: clonal lineage identifier
+
+Note:
+
+* Both `sequence_alignment` and `germline_alignment` must be present but do not need to be pre-aligned — alignment is recomputed internally.
+* You can restrict these two columns to a specific sequence region (e.g., FR1 to FR3), no need to use the full sequence. 
 
 ## Install
 
@@ -48,7 +60,7 @@ If you're not lucky, you may also need to install the following tools and place 
 
 ## Usage
 
-```{py}
+```py
 ## Test with real sequences
 import polars as pl
 from igonometree import infer_trees, extract_trees
@@ -70,13 +82,8 @@ trees[key].show()
 ## Technical details
 
 * **Alignment:** Uses `mafft` for fast multiple sequence alignment.
-* **Subsampling:** For large lineages, computes a distance matrix and clusters sequences. `Ns` sequences are selected from clusters.
-* **Ancestral reconstruction:** Based on parsimony and the known germline sequence. Likelihood-based ASR is complicated on multifurcating trees.
-* **Tree inference and placement:** Uses `raxml-ng` and `epa-ng`. 
-* **Tree type:** Non-binary (collapsed) trees are used.
+* **Subsampling:** For large lineages, computes a distance matrix and clusters sequences with AgglomerativeClustering. `Ns` sequences are selected from clusters.
+* **Tree inference and placement:** Uses `raxml-ng` and `epa-ng`. Return trees that are usually non-binary (collapsed) (which is very frequent for antibodies).
+* **Ancestral reconstruction:** For ASR (and just for ASR), we use parsimony rather than likelihood. Likelihood-based ASR methods don't really exist for multifurcating trees, and the existence of the germline make parsimony based methods fairly good.
 * **Germline required.** Needed for rooting and ASR.
 
-## Caveats
-
-* The method prioritizes scalability and robustness over exactness.
-* Works well for qualitative structure and lineage dynamics, but don’t expect perfect branch support.
