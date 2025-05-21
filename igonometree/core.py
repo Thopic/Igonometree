@@ -12,7 +12,7 @@ mafft = os.path.join(tools_location, "mafft.bat")
 
 
 
-def infer_trees(df, n_subsample=100, isotype_order=False, nb_threads=20,
+def infer_trees(df, n_subsample=100, isotype_order=False, nb_threads=1,
                 seed=42, scratch_folder='./', log_file=None, keep_tmp_files=False):
     """
     Batch-infers phylogenetic trees for each group in a DataFrame.
