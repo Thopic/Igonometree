@@ -1,16 +1,6 @@
 import polars as pl
-import tempfile
-import random
-import numpy as np
-import os
-import subprocess
-from sklearn.cluster import AgglomerativeClustering
-import numpy as np
 import ete4
-import json
 import re
-from tqdm import tqdm
-import shutil
 
 
 def extract_trees(df):

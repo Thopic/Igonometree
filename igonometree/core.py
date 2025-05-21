@@ -1,19 +1,28 @@
 import uuid
+import tempfile
+import random
+import os
+import polars as pl
 from importlib.resources import files
-from igonometree.utils import *
 import warnings
-
+import subprocess
+from sklearn.cluster import AgglomerativeClustering
+import numpy as np
+import json
+from tqdm import tqdm
+import shutil
+from igonometree.utils import *
 
 # location of the tools
-tools_location  = files("igonometree").joinpath("..", "tools")
+tools_location = files("igonometree").joinpath("..", "tools")
 epang = os.path.join(tools_location, "epa-ng")
 raxml= os.path.join(tools_location, "raxml-ng")
 mafft = os.path.join(tools_location, "mafft.bat")
 
 
-
 def infer_trees(df, n_subsample=100, isotype_order=False, nb_threads=1,
-                seed=42, scratch_folder='./', log_file=None, keep_tmp_files=False):
+                seed=42, scratch_folder='./', log_file=None,
+                keep_tmp_files=False):
     """
     Batch-infers phylogenetic trees for each group in a DataFrame.
 
@@ -24,22 +33,21 @@ def infer_trees(df, n_subsample=100, isotype_order=False, nb_threads=1,
       4. Optionally writes per‑group logs to `log_file`.
 
     Parameters:
-        df (pl.DataFrame): Must contain a ‘group_id’ column and the columns required by infer_tree.
-        n_subsample (int): Number of sequences to sample per group for tree inference.
+        df (pl.DataFrame): Must contain a ‘group_id’ column and the columns
+        required by infer_tree.
+        n_subsample (int): Number of sequences to sample per group for tree
+        inference.
         isotype_order (bool): If true, try to keep the right isotype order
         nb_threads (int): Threads for the tree‑building step.
         seed (int): Random seed for reproducibility.
         scratch_folder (str): Directory for temporary files.
         log_file (str or None): If set, write the log output here.
-        keep_tmp_files (bool): If true, keep the temporary folder with all the intermediate data
+        keep_tmp_files (bool): If true, keep the temporary folder with all the
+        intermediate data
 
     Returns:
-        pl.DataFrame: Combined tree annotations for all groups, with a ‘group_id’ column.
-
-    Notes:
-        - Overwrites `log_file` on each iteration; likely intended to append.
-        - Inefficient: concatenates DataFrames in a loop—use a list and single concat.
-        - No check that df.group_id is non-null or consistent type.
+        pl.DataFrame: Combined tree annotations for all groups, with a
+        ‘group_id’ column.
     """
 
     try:
@@ -53,19 +61,42 @@ def infer_trees(df, n_subsample=100, isotype_order=False, nb_threads=1,
             warnings.warn("Clonal lineages with less than 5 sequences are skipped & removed.", stacklevel=2)
             continue
 
+
         
         log, _, tree_data = infer_tree(data, n_subsample=n_subsample,
                                        isotype_order=isotype_order,
                                        nb_threads=nb_threads,
                                        scratch_folder=scratch_folder,
                                        keep_tmp_files=keep_tmp_files)
+        
+        
+
+
+            
         tree_data = tree_data.with_columns(
-            group_id = pl.lit(group_id[0]))
-        all_tree_data = tree_data if all_tree_data is None else pl.concat([all_tree_data, tree_data])
+            group_id=pl.lit(group_id[0]))
+
+        all_tree_data = (tree_data if all_tree_data is None
+                         else pl.concat([all_tree_data, tree_data],
+                                        how='diagonal'))
         if log_file is not None:
             with open(log_file, 'a') as fw:
                 fw.write(group_id[0] + "\n" + log + "\n" + "#"*20)
     return all_tree_data
+
+
+
+def try_infer_tree(df, **kwargs):
+    """ Try twice to infer the tree, just in case """
+    
+    for attempt in range(2):
+        try:
+            return infer_tree(df, **kwargs)  # your original function
+        except Exception as e:
+            log += f"\n FAILURE OF INFERENCE, attempt #{attempt} \n"
+
+    # in case it didn't work, return the og dataframe
+    return log, None, df
 
 
 def infer_tree(df, n_subsample=100, isotype_order=False,
@@ -77,24 +108,30 @@ def infer_tree(df, n_subsample=100, isotype_order=False,
     Steps:
       1. Runs MAFFT alignment on all sequences + germline.
       2. Subsamples `n_subsample` sequences.
-      3. Builds tree with RAxML and infer the ancestral sequences using parsimony.
+      3. Builds tree with RAxML and infer the ancestral sequences
+      using parsimony.
       4. Replaces original sequences onto the tree.
       5. Returns raw logs, Newick string, and annotated DataFrame.
 
     Parameters:
-        df (pl.DataFrame): Must include exactly one group’s `sequence_alignment` and `germline_alignment`, plus identifiers.
+        df (pl.DataFrame): Must include `sequence_alignment`
+        and `germline_alignment`, plus `sequence_id` (unique)
+        and `group_id` (only one)
         n_subsample (int): Number of sequences to sample for tree inference.
         isotype_order (bool): If true, try to keep the right isotype order
         nb_threads (int): Threads for RAxML; should not exceed CPU cores.
         seed (int or None): Random seed for reproducibility.
         scratch_folder (str): Directory for temporary working files.
-        keep_tmp_files (bool): If true, keep the temporary folder with all the intermediate data
-    
+        keep_tmp_files (bool): If true, keep the temporary folder with all the
+        intermediate data
+
     Returns:
         tuple:
-            full_output (str): Combined stdout/stderr from alignment, tree build, and placement.
+            full_output (str): Combined stdout/stderr from alignment,
+            tree build, and placement.
             newick_str (str): Newick representation of the final tree.
-            df (pl.DataFrame): Input `df` enriched with placement and mutation annotations.
+            df (pl.DataFrame): Input `df` enriched with placement and
+            mutation annotations.
     """
 
     full_output = ""
@@ -105,8 +142,8 @@ def infer_tree(df, n_subsample=100, isotype_order=False,
 
     # all the alignment are lower letters only
     df = df.with_columns(
-        sequence_alignment = pl.col('sequence_alignment').str.to_uppercase(),
-        germline_alignment = pl.col('germline_alignment').str.to_uppercase())
+        sequence_alignment=pl.col('sequence_alignment').str.to_uppercase(),
+        germline_alignment=pl.col('germline_alignment').str.to_uppercase())
 
     # check that all the sequence_id are distincts and only 1 group_id
     assert df['sequence_id'].n_unique() == len(df), "Some sequence_id are the same"
@@ -114,7 +151,7 @@ def infer_tree(df, n_subsample=100, isotype_order=False,
     
     # Use a temporary directory for intermediate files
     with tempfile.TemporaryDirectory(dir=scratch_folder, delete=(not keep_tmp_files)) as out_directory:
-        
+
         # Step 1: Multiple sequence alignment
         output = align(df, out_directory, nb_threads=nb_threads)
         full_output += "ALIGN ------ \n" + output.stdout.decode() + output.stderr.decode()
@@ -123,7 +160,7 @@ def infer_tree(df, n_subsample=100, isotype_order=False,
 
         # Step 2: Subsample sequences for tree inference (clustering on the distance matrix)
         sample_representative_sequences(out_directory, n_subsample)
-# 
+        
         # Step 3: Infer tree using the aligned + sampled sequences
         output, newick_str = infer_subsampled_tree(directory=out_directory,
                                                    df=df,
@@ -142,7 +179,6 @@ def infer_tree(df, n_subsample=100, isotype_order=False,
         return full_output, newick_str, df
 
     raise RuntimeError("Temporary directory creation failed")
-
 
 
 def collapse_placement(jplace_file, collapsed_tree_file):
