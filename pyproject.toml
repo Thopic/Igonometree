@@ -19,9 +19,6 @@ dependencies = [
 requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
-[project.scripts]
-yourtool = "igonometree.cli:main"
-
 [tool.setuptools]
 packages = ["igonometree"]
 
