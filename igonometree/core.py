@@ -109,7 +109,7 @@ def infer_tree(df, n_subsample=100, isotype_order=False,
         germline_alignment = pl.col('germline_alignment').str.to_uppercase())
 
     # check that all the sequence_id are distincts and only 1 group_id
-    assert df['sequence_id'].n_unique() == len(df)
+    assert df['sequence_id'].n_unique() == len(df), "Some sequence_id are the same"
     assert df['group_id'].n_unique() == 1
     
     # Use a temporary directory for intermediate files

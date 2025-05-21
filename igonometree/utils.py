@@ -29,7 +29,7 @@ def extract_trees(df):
 
     # check that the structure is right
     for k in dct:
-        assert len(ete4.Tree(dct[k]).children) == 1
+        assert len(ete4.Tree(dct[k]).children) == 1, f"One of the tree is malformed \n{dct[k]}"
     
     return {k: ete4.Tree(dct[k]).children[0] for k in dct}
 
@@ -96,7 +96,7 @@ def hamming(s1, s2):
     """
     Computes Hamming distance between two strings of equal length.
     """
-    assert len(s1) == len(s2)
+    assert len(s1) == len(s2), "Can't compute the hamming distance for sequences of different length"
     return sum(c1 != c2 for c1, c2 in zip(s1, s2))
 
 
@@ -114,8 +114,8 @@ def mutation_string(ref: str, alt: str) -> str:
 
     muts = []
     for i, (r, a) in enumerate(zip(ref, alt)):
-        assert r in {'A', 'T', 'G', 'C', '-'}
-        assert a in {'A', 'T', 'G', 'C', '-'}
+        assert r in {'A', 'T', 'G', 'C', '-'}, f"Invalid character {r} in the sequence"
+        assert a in {'A', 'T', 'G', 'C', '-'}, f"Invalid character {a} in the sequence"
         if r == a:
             continue
         if r != "-" and a != "-":
