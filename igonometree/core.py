@@ -26,14 +26,14 @@ def infer_trees(df, n_subsample=100, isotype_order=False, nb_threads=1,
     """
     Batch-infers phylogenetic trees for each group in a DataFrame.
 
-    For each unique group_id in `df`:
+    For each unique clone_id in `df`:
       1. Calls infer_tree(...) on its subset.
-      2. Tags resulting tree data with group_id.
+      2. Tags resulting tree data with clone_id.
       3. Concatenates all per‑group results into one DataFrame.
       4. Optionally writes per‑group logs to `log_file`.
 
     Parameters:
-        df (pl.DataFrame): Must contain a ‘group_id’ column and the columns
+        df (pl.DataFrame): Must contain a ‘clone_id’ column and the columns
         required by infer_tree.
         n_subsample (int): Number of sequences to sample per group for tree
         inference.
@@ -47,7 +47,7 @@ def infer_trees(df, n_subsample=100, isotype_order=False, nb_threads=1,
 
     Returns:
         pl.DataFrame: Combined tree annotations for all groups, with a
-        ‘group_id’ column.
+        ‘clone_id’ column.
     """
 
     try:
@@ -56,7 +56,7 @@ def infer_trees(df, n_subsample=100, isotype_order=False, nb_threads=1,
         pass
     
     all_tree_data = None
-    for group_id, data in tqdm(df.group_by('group_id'), total=df['group_id'].n_unique()):
+    for clone_id, data in tqdm(df.group_by('clone_id'), total=df['clone_id'].n_unique()):
         if len(data) < 5:
             warnings.warn("Clonal lineages with less than 5 sequences are skipped & removed.", stacklevel=2)
             continue
@@ -74,14 +74,14 @@ def infer_trees(df, n_subsample=100, isotype_order=False, nb_threads=1,
 
             
         tree_data = tree_data.with_columns(
-            group_id=pl.lit(group_id[0]))
+            clone_id=pl.lit(clone_id[0]))
 
         all_tree_data = (tree_data if all_tree_data is None
                          else pl.concat([all_tree_data, tree_data],
                                         how='diagonal'))
         if log_file is not None:
             with open(log_file, 'a') as fw:
-                fw.write(group_id[0] + "\n" + log + "\n" + "#"*20)
+                fw.write(clone_id[0] + "\n" + log + "\n" + "#"*20)
     return all_tree_data
 
 
@@ -116,7 +116,7 @@ def infer_tree(df, n_subsample=100, isotype_order=False,
     Parameters:
         df (pl.DataFrame): Must include `sequence_alignment`
         and `germline_alignment`, plus `sequence_id` (unique)
-        and `group_id` (only one)
+        and `clone_id` (only one)
         n_subsample (int): Number of sequences to sample for tree inference.
         isotype_order (bool): If true, try to keep the right isotype order
         nb_threads (int): Threads for RAxML; should not exceed CPU cores.
@@ -145,9 +145,9 @@ def infer_tree(df, n_subsample=100, isotype_order=False,
         sequence_alignment=pl.col('sequence_alignment').str.to_uppercase(),
         germline_alignment=pl.col('germline_alignment').str.to_uppercase())
 
-    # check that all the sequence_id are distincts and only 1 group_id
+    # check that all the sequence_id are distincts and only 1 clone_id
     assert df['sequence_id'].n_unique() == len(df), "Some sequence_id are the same"
-    assert df['group_id'].n_unique() == 1
+    assert df['clone_id'].n_unique() == 1
     
     # Use a temporary directory for intermediate files
     with tempfile.TemporaryDirectory(dir=scratch_folder, delete=(not keep_tmp_files)) as out_directory:

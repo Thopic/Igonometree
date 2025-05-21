@@ -5,17 +5,17 @@ import re
 
 def extract_trees(df):
     """
-    Returns a dictionary mapping each group_id to its corresponding ete4 tree.
+    Returns a dictionary mapping each clone_id to its corresponding ete4 tree.
 
-    Assumes input `df` is the output of `infer_trees`, containing at least `group_id` and `tree` columns.
+    Assumes input `df` is the output of `infer_trees`, containing at least `clone_id` and `tree` columns.
     Each tree includes an artificial root node added to satisfy Newick format constraints.
     This function removes that node and returns the actual subtree.
 
     Returns:
-        dict: {group_id: ete4.Tree} with one child stripped from the root.
+        dict: {clone_id: ete4.Tree} with one child stripped from the root.
     """
-    ddf = df[['group_id', 'tree']].unique()
-    dct =  dict(zip(ddf['group_id'], ddf['tree']))
+    ddf = df[['clone_id', 'tree']].unique()
+    dct =  dict(zip(ddf['clone_id'], ddf['tree']))
 
     # check that the structure is right
     for k in dct:

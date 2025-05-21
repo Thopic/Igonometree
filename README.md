@@ -26,7 +26,7 @@ The input is a DataFrame in AIRR format with the following required columns:
 * `sequence_id`: unique identifier for each sequence
 * `sequence_alignment`: the sequence (not necessarily aligned)
 * `germline_alignment`: the corresponding germline sequence
-* `group_id`: clonal lineage identifier
+* `clone_id`: clonal lineage identifier
 
 Note:
 
@@ -69,14 +69,14 @@ from igonometree import infer_trees, extract_trees
 df = pl.read_csv('example_airr.csv')
 df = df.rename({'cdr1fwr3_sequence_alignment': 'sequence_alignment', 
                 'cdr1fwr3_germline_alignment': 'germline_alignment', 
-                'clonal_family_hilary': 'group_id'})
+                'clonal_family_hilary': 'clone_id'})
 
 # n_subsample is the size of the "core" tree, but all the sequences are analyzed
 df = infer_trees(df, n_subsample=50)
 trees = extract_trees(df)
 
 # to show the tree, ete4 uses pyQt6 by default, which should be installed (pip install PyQt6)
-key = df['group_id'][0]
+key = df['clone_id'][0]
 trees[key].show()
 ```
 
