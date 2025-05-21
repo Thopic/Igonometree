@@ -64,10 +64,11 @@ def infer_trees(df, n_subsample=100, isotype_order=False, nb_threads=1,
 
         
         log, _, tree_data = try_infer_tree(data, n_subsample=n_subsample,
-                                       isotype_order=isotype_order,
-                                       nb_threads=nb_threads,
-                                       scratch_folder=scratch_folder,
-                                       keep_tmp_files=keep_tmp_files)
+                                           isotype_order=isotype_order,
+                                           nb_threads=nb_threads,
+                                           seed=seed,
+                                           scratch_folder=scratch_folder,
+                                           keep_tmp_files=keep_tmp_files)
         
         
 
@@ -94,9 +95,10 @@ def try_infer_tree(df, n_subsample=100, isotype_order=False,
     log = ""
     for attempt in range(2):
         try:
-            return infer_tree(data, n_subsample=n_subsample,
+            return infer_tree(df, n_subsample=n_subsample,
                               isotype_order=isotype_order,
                               nb_threads=nb_threads,
+                              seed=seed,
                               scratch_folder=scratch_folder,
                               keep_tmp_files=keep_tmp_files)
         
