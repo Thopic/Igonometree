@@ -1,10 +1,9 @@
 import uuid
+from importlib.resources import files
 from igonometree.utils import *
 
 # location of the tools
-# TEMP XXX
-tools_location  = "/home/dupic/Downloads/Igonometree/tools/"
-# os.path.join(os.path.dirname(__file__), "tools") 
+tools_location  = files("igonometree").joinpath("..", "tools")
 epang = os.path.join(tools_location, "epa-ng")
 raxml= os.path.join(tools_location, "raxml-ng")
 mafft = os.path.join(tools_location, "mafft.bat")

@@ -2,8 +2,7 @@
 name = "igonometree"
 version = "0.1.0"
 description = "High-throughput antibody/antigen phylogenetic pipeline"
-authors = [{ name = "Thomas Dupic",
-    email = "dupic@ciml.univ-mrs.fr"}]   	 
+authors = [{ name = "Thomas Dupic", email = "dupic@ciml.univ-mrs.fr"}]   	 
 readme = "README.md"
 license = { file = "LICENSE" }
 requires-python = ">=3.8"
@@ -12,8 +11,7 @@ dependencies = [
     "numpy>=1.23.0",
     "scikit-learn>=1.2.0",
     "ete4>=1.1.1",
-    "tqdm>=4.64.0"
-]
+    "tqdm>=4.64.0"]
 
 [build-system]
 requires = ["setuptools>=61.0", "wheel"]
