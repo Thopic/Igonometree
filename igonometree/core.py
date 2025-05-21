@@ -362,12 +362,12 @@ def align(df, out_directory, nb_threads=1):
     parameters = ""
     # recommended methods by mafft for less than 200 sequences
     if len(df) < 200:
-        parameters = "--nuc --globalpair --maxiterate 1000 --ep 0.123 --op 10"
+        parameters = "--nuc --globalpair --maxiterate 1000 --ep 0.248 --op 20"
     # very large alignment
     elif len(df) > 10000:
         parameters = "--nuc --retree 1 --maxiterate 0 --nofft --parttree --ep 0.123 --op 10"
     else:
-        parameters = "--nuc --retree 2 --maxiterate 0 --ep 0.123 --op 10 "
+        parameters = "--nuc --retree 2 --maxiterate 0 --ep 0.248 --op 20 "
     
     
     command = f"{mafft}  --thread {nb_threads} {parameters} {sequence_path} > {output_path}"
@@ -471,7 +471,8 @@ def infer_subsampled_tree(directory, df,
         
     # run raxml
     msa_file = os.path.join(directory, "clonal_alignment_reduced.fa")
-    cmd = (f"{raxml} --seed {seed} --threads {nb_threads}" 
+    cmd = (f"{raxml} --seed {seed} --threads {nb_threads}"
+           f" --force perf_threads" # shouldn't be necessary but I had issue with this in setup where it should not fail
            f" --model 'GTR+G'"
            f" --outgroup germline"
            f" --tree pars{{{nb_start_trees}}},rand{{{nb_start_trees}}}" 
