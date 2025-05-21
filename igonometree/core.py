@@ -88,7 +88,8 @@ def infer_trees(df, n_subsample=100, isotype_order=False, nb_threads=1,
 
 def try_infer_tree(df, **kwargs):
     """ Try twice to infer the tree, just in case """
-    
+
+    log = ""
     for attempt in range(2):
         try:
             return infer_tree(df, **kwargs)  # your original function
