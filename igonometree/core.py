@@ -257,12 +257,13 @@ def collapse_placement(jplace_file, collapsed_tree_file):
                          )
 
         df_placement = df_placement.group_by('ancestor_id').agg(
-            pl.col('likelihood').map_elements(lambda g: np.logaddexp.reduce(list(g)),
-                                              return_dtype=float),
+            pl.col('likelihood'),
             pl.col('likelihood_weight_ratio').sum(),
             pl.col('distal_length').mean(),
             pl.col('pendant_length').mean()
-        ).sort(by='likelihood_weight_ratio', descending=True
+        ).with_columns(pl.col('likelihood').map_elements(
+            lambda g: np.logaddexp.reduce(list(g)),return_dtype=float)
+                      ).sort(by='likelihood_weight_ratio', descending=True
                ).with_columns(sequence_id = pl.lit(name)).head(1)
 
         all_placements = df_placement if all_placements is None else pl.concat([all_placements, df_placement]) 
