@@ -57,6 +57,9 @@ If you're not lucky, you may also need to install the following tools and place 
   * `tools/mafft.bat`
   * `tools/mafftdir/` (including `bin/mafft` and `libexec/`)
 
+* **gappa** (v0.9.0)
+  `git clone --recursive https://github.com/lczech/gappa.git`
+  `cd gappa` and compile with `make`
 
 ## Usage
 

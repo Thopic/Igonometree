@@ -18,6 +18,7 @@ tools_location = files("igonometree").joinpath("..", "tools")
 epang = os.path.join(tools_location, "epa-ng")
 raxml= os.path.join(tools_location, "raxml-ng")
 mafft = os.path.join(tools_location, "mafft.bat")
+gappa = os.path.join(tools_location, "gappa")
 
 
 def infer_trees(df, n_subsample=100, isotype_order=False, nb_threads=1,
@@ -63,7 +64,7 @@ def infer_trees(df, n_subsample=100, isotype_order=False, nb_threads=1,
 
 
         
-        log, _, tree_data = try_infer_tree(data, n_subsample=n_subsample,
+        log, _, _, tree_data = try_infer_tree(data, n_subsample=n_subsample,
                                            isotype_order=isotype_order,
                                            nb_threads=nb_threads,
                                            seed=seed,
@@ -106,7 +107,7 @@ def try_infer_tree(df, n_subsample=100, isotype_order=False,
             log += f"\n FAILURE OF INFERENCE, attempt #{attempt}, exception {e} \n"
 
     # in case it didn't work, return the og dataframe
-    return log, None, df
+    return log, None, None, df
 
 
 def infer_tree(df, n_subsample=100, isotype_order=False,
@@ -183,10 +184,20 @@ def infer_tree(df, n_subsample=100, isotype_order=False,
         # with their inferred properties
         output, df = locate_sequences(df, out_directory)
         full_output += "PLACEMENT --- \n" + output.stdout.decode() + output.stderr.decode()
+        
         if output.returncode != 0:
             raise RuntimeError(f"Placement algorithm failed:\n{full_output}")
 
-        return full_output, newick_str, df
+        complete_tree = None
+        # Step 5: Create a tree with all the sequences
+        # output, complete_tree = add_sequences_to_trees(out_directory)
+        # full_output += "ADD TO TREES --- \n" + output.stdout.decode() + output.stderr.decode()
+        # if output.returncode != 0:
+        #     raise RuntimeError(f"Tree update algorithm failed:\n{full_output}")
+        # df = df.with_columns(complete_tree = pl.lit(complete_tree))
+        
+
+        return full_output, newick_str, complete_tree, df
 
     raise RuntimeError("Temporary directory creation failed")
 
@@ -296,6 +307,7 @@ def locate_sequences(df, out_directory):
     
     full_alignment_file = os.path.join(out_directory, "clonal_alignment.fa")
     reduced_alignment_file = os.path.join(out_directory, "clonal_alignment_reduced.fa")
+
     # here we need to use "bestTree" rather than "bestTreeCollapsed" sadly
     reduced_tree_file = os.path.join(out_directory, "tree.raxml.bestTree")
     model_file = os.path.join(out_directory, "tree.raxml.bestModel")
@@ -561,11 +573,21 @@ def infer_subsampled_tree(directory, df,
     return full_output, newick_str
 
 
-# def pick_trees(directory, df):
-#     """ Pick trees according to the isotype order """
-#     tree_path = os.path.join(directory, 'tree.raxml')
+def add_sequences_to_trees(out_directory):
+    """ Add sequences to an already created tree """
+    command = f"{gappa} examine graft --name-prefix EPA_added_ --fully-resolve --jplace-path {out_directory}/epa_result.jplace --out-dir {out_directory};" 
+    result = subprocess.run(command,
+                            stdout=subprocess.PIPE,
+                            stderr=subprocess.PIPE,
+                            shell=True)
 
+    output = f"{result.stdout.decode()}\n{result.stderr.decode()}"
+    if result.returncode != 0:
+        raise RuntimeError(f"Graft failed:\n{output}")
 
+    with open(f'{out_directory}/epa_result.newick') as f:
+        tree = f.readline()
+    return output, tree
 
 
 def load_tree_with_sequences(tree_file, align_file):
