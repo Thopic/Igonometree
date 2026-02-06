@@ -21,7 +21,7 @@ mafft = os.path.join(tools_location, "mafft.bat")
 gappa = os.path.join(tools_location, "gappa")
 
 
-def infer_trees(df, n_subsample=100, isotype_order=False, nb_threads=1,
+def infer_trees(df, n_subsample=100, isotype_order=False, no_leaves = False, nb_threads=1,
                 seed=42, scratch_folder='./', log_file=None,
                 keep_tmp_files=False):
     """
@@ -38,7 +38,8 @@ def infer_trees(df, n_subsample=100, isotype_order=False, nb_threads=1,
         required by infer_tree.
         n_subsample (int): Number of sequences to sample per group for tree
         inference.
-        isotype_order (bool): If true, try to keep the right isotype order
+        isotype_order (bool): If true, try to keep the right isotype order [unimplemented]
+        no_leaves (bool): If true, return the final tree without the leaves
         nb_threads (int): Threads for the tree‑building step.
         seed (int): Random seed for reproducibility.
         scratch_folder (str): Directory for temporary files.
@@ -66,6 +67,7 @@ def infer_trees(df, n_subsample=100, isotype_order=False, nb_threads=1,
         
         log, _, _, tree_data = try_infer_tree(data, n_subsample=n_subsample,
                                            isotype_order=isotype_order,
+                                              no_leaves = no_leaves,
                                            nb_threads=nb_threads,
                                            seed=seed,
                                            scratch_folder=scratch_folder,
@@ -88,7 +90,7 @@ def infer_trees(df, n_subsample=100, isotype_order=False, nb_threads=1,
 
 
 
-def try_infer_tree(df, n_subsample=100, isotype_order=False,
+def try_infer_tree(df, n_subsample=100, no_leaves = False, isotype_order=False,
                nb_threads=1, seed=42, scratch_folder='./',
                keep_tmp_files=False):
     """ Try twice to infer the tree, just in case """
@@ -98,6 +100,7 @@ def try_infer_tree(df, n_subsample=100, isotype_order=False,
         try:
             return infer_tree(df, n_subsample=n_subsample,
                               isotype_order=isotype_order,
+                              no_leaves = no_leaves,
                               nb_threads=nb_threads,
                               seed=seed,
                               scratch_folder=scratch_folder,
@@ -110,7 +113,7 @@ def try_infer_tree(df, n_subsample=100, isotype_order=False,
     return log, None, None, df
 
 
-def infer_tree(df, n_subsample=100, isotype_order=False,
+def infer_tree(df, n_subsample=100, isotype_order=False, no_leaves=False, 
                nb_threads=1, seed=42, scratch_folder='./',
                keep_tmp_files=False):
     """
@@ -130,6 +133,7 @@ def infer_tree(df, n_subsample=100, isotype_order=False,
         and `clone_id` (only one)
         n_subsample (int): Number of sequences to sample for tree inference.
         isotype_order (bool): If true, try to keep the right isotype order
+        no_leaves (bool): If true the trees returned won't have leaves
         nb_threads (int): Threads for RAxML; should not exceed CPU cores.
         seed (int or None): Random seed for reproducibility.
         scratch_folder (str): Directory for temporary working files.
@@ -179,17 +183,27 @@ def infer_tree(df, n_subsample=100, isotype_order=False,
                                                    nb_threads=nb_threads,
                                                    seed=seed)
         full_output += output
+        
 
         # Step 4: Locate all the sequences on the tree and annotate them
         # with their inferred properties
         output, df = locate_sequences(df, out_directory)
         full_output += "PLACEMENT --- \n" + output.stdout.decode() + output.stderr.decode()
-        
+
         if output.returncode != 0:
             raise RuntimeError(f"Placement algorithm failed:\n{full_output}")
 
+        # Step 5: remove the leaves (germline excepted) if needed
+        if no_leaves:
+            tree = ete4.Tree(newick_str)
+            all_leaves = [n.name for n in tree if n.name != 'germline']
+            for n in tree:
+                if n.name in all_leaves:
+                    n.detach()
+            newick_str = tree.write()
+
         complete_tree = None
-        # Step 5: Create a tree with all the sequences
+        # Step 6, probably not necessary: Create a tree with all the sequences
         # output, complete_tree = add_sequences_to_trees(out_directory)
         # full_output += "ADD TO TREES --- \n" + output.stdout.decode() + output.stderr.decode()
         # if output.returncode != 0:
