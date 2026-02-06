@@ -56,6 +56,10 @@ def infer_trees(df, n_subsample=100, isotype_order=False, no_leaves = False, nb_
         df = pl.from_pandas(df)
     except:
         pass
+
+    # cast the clone_id column to str, just in case.
+    df = df.with_columns(pl.col('clone_id').cast(str))
+
     
     all_tree_data = None
     for clone_id, data in tqdm(df.group_by('clone_id'), total=df['clone_id'].n_unique()):
