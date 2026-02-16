@@ -205,6 +205,8 @@ def infer_tree(df, n_subsample=100, isotype_order=False, no_leaves=False,
                 if n.name in all_leaves:
                     n.detach()
             newick_str = tree.write()
+            # replace by the new tree
+            df = df.with_columns(pl.lit(newick_str).alias('tree'))
 
         complete_tree = None
         # Step 6, probably not necessary: Create a tree with all the sequences
