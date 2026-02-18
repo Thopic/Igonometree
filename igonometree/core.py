@@ -479,12 +479,12 @@ def sample_representative_sequences(out_directory, n_subsample):
     
     if len(df) > n_subsample:
         num_sequences = len(sequences)
-        pairwise_distances = np.zeros((num_sequences, num_sequences))
-        for i in range(num_sequences):
-            for j in range(i + 1, num_sequences):
-                distance = hamming(sequences[i], sequences[j])
-                pairwise_distances[i, j] = distance
-                pairwise_distances[j, i] = distance
+        assert(all([len(s) == len(sequences[0]) for s in sequences]))
+        arr = np.array([list(s.encode()) for s in sequences], dtype=np.uint8)
+        pairwise_distances = np.empty((n, n), dtype=np.uint8)
+        for i in tqdm(range(n)):
+          pairwise_distances[i, i+1:] = np.sum(arr[i] != arr[i+1:], axis=1)
+          pairwise_distances[i+1:, i] = distances[i, i+1:]
 
         # Clustering
         clustering = AgglomerativeClustering(n_clusters=n_subsample - 1,
