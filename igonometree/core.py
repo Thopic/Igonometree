@@ -484,7 +484,7 @@ def sample_representative_sequences(out_directory, n_subsample):
         pairwise_distances = np.empty((num_sequences, num_sequences), dtype=np.uint8)
         for i in tqdm(range(num_sequences)):
           pairwise_distances[i, i+1:] = np.sum(arr[i] != arr[i+1:], axis=1)
-          pairwise_distances[i+1:, i] = distances[i, i+1:]
+          pairwise_distances[i+1:, i] = pairwise_distances[i, i+1:]
 
         # Clustering
         clustering = AgglomerativeClustering(n_clusters=n_subsample - 1,
