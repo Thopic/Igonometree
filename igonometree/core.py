@@ -204,7 +204,7 @@ def infer_tree(df, n_subsample=100, isotype_order=False, no_leaves=False,
             for n in tree:
                 if n.name in all_leaves:
                     n.detach()
-            newick_str = tree.write()
+            newick_str = tree.write(props=['name', 'sequence'])
             # replace by the new tree
             df = df.with_columns(pl.lit(newick_str).alias('tree'))
 
