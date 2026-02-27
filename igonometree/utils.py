@@ -91,6 +91,27 @@ def hamming(s1, s2):
     assert len(s1) == len(s2), "Can't compute the hamming distance for sequences of different length"
     return sum(c1 != c2 for c1, c2 in zip(s1, s2))
 
+def compatible_nucleotides(n1: str, n2: str) -> bool:
+    iupac_codes = {
+        'A': {'A'},
+        'T': {'T'},
+        'C': {'C'},
+        'G': {'G'},
+        'N': {'A', 'T', 'C', 'G', 'N'},
+        'R': {'A', 'G'},
+        'Y': {'C', 'T'},
+        'S': {'G', 'C'},
+        'W': {'A', 'T'},
+        'K': {'G', 'T'},
+        'M': {'A', 'C'},
+        'B': {'C', 'G', 'T'},
+        'D': {'A', 'G', 'T'},
+        'H': {'A', 'C', 'T'},
+        'V': {'A', 'C', 'G'}
+    }
+    n1_set = iupac_codes.get(n1.upper(), set())
+    n2_set = iupac_codes.get(n2.upper(), set())
+    return len(n1_set & n2_set) > 0
 
 def mutation_string(ref: str, alt: str) -> str:
     """
@@ -101,6 +122,7 @@ def mutation_string(ref: str, alt: str) -> str:
       Ipos[to]        (insertion)
     Positions are zero‑based, for insertions the pos is where the inserted
     nucleotide sits in the final (inserted) sequence. 
+    Nucleotides that are compatible are not counted as mutations (ie N / T)
     """
     assert len(ref) == len(alt), "Aligned sequences must be same length"
 
@@ -108,7 +130,7 @@ def mutation_string(ref: str, alt: str) -> str:
     for i, (r, a) in enumerate(zip(ref, alt)):
         assert r in {'A', 'T', 'G', 'C', 'N', 'R','Y','S','W','K','M','B','D','H','V', '-'}, f"Invalid character {r} in the sequence"
         assert a in {'A', 'T', 'G', 'C', 'N', 'R','Y','S','W','K','M','B','D','H','V', '-'}, f"Invalid character {a} in the sequence"
-        if r == a:
+        if r == a or compatible_nucleotides(r, a):
             continue
         if r != "-" and a != "-":
             muts.append(f"S{r}{i}{a}")
